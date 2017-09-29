@@ -75,7 +75,6 @@ class KNearestNeighbor(object):
         # not use a loop over dimension.                                    #
         #####################################################################
         dists[i][j] = np.sqrt(np.sum(np.power(self.X_train[j] - X[i], 2)))
-        pass
         #####################################################################
         #                       END OF YOUR CODE                            #
         #####################################################################
@@ -131,7 +130,6 @@ class KNearestNeighbor(object):
     x2 = np.tile(np.sum(np.power(self.X_train,2), axis = 1), (num_test, 1))
     y2 = np.transpose(np.tile(np.sum(np.power(X,2), axis = 1), (num_train, 1)))
     dists = np.sqrt(x2 + y2 - 2*xy)
-    pass
     #########################################################################
     #                         END OF YOUR CODE                              #
     #########################################################################
@@ -164,7 +162,6 @@ class KNearestNeighbor(object):
       # Hint: Look up the function numpy.argsort.                             #
       #########################################################################
       closest_y = self.y_train[np.argsort(dists[i])[0:k]]
-      pass
       #########################################################################
       # TODO:                                                                 #
       # Now that you have found the labels of the k nearest neighbors, you    #
@@ -176,7 +173,6 @@ class KNearestNeighbor(object):
       for j in xrange(len(closest_y)):
             vote_array[0][closest_y[j]] += 1
       y_pred[i] = np.argmax(vote_array)
-      pass
       #########################################################################
       #                           END OF YOUR CODE                            # 
       #########################################################################
