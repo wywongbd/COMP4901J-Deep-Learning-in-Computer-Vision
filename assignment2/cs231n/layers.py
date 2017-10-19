@@ -183,7 +183,24 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # variance, storing your result in the running_mean and running_var   #
         # variables.                                                          #
         #######################################################################
-        pass
+        
+        meanx = np.mean(x, axis = 0)
+        xmm = x - meanx
+        
+        varx = np.sum(xmm ** 2, axis = 0) / N
+        sqrtvarx = np.sqrt(varx)
+        
+        denom = sqrtvarx + eps
+        prod = np.reciprocal(denom)
+        
+        norm = xmm * prod 
+        
+        out = norm * gamma + beta
+        
+        running_mean = momentum * running_mean + (1 - momentum) * meanx
+        running_var = momentum * running_var + (1 - momentum) * varx
+        
+        cache = norm, prod, xmm, denom, sqrtvarx, xmm, meanx, varx, x, gamma, beta
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -194,7 +211,9 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # then scale and shift the normalized data using gamma and beta.      #
         # Store the result in the out variable.                               #
         #######################################################################
-        pass
+        out = (x - running_mean) / np.sqrt(running_var)
+        out = out * gamma + beta
+        
         #######################################################################
         #                          END OF YOUR CODE                           #
         #######################################################################
@@ -230,7 +249,28 @@ def batchnorm_backward(dout, cache):
     # TODO: Implement the backward pass for batch normalization. Store the    #
     # results in the dx, dgamma, and dbeta variables.                         #
     ###########################################################################
-    pass
+    norm, prod, xmm, denom, sqrtvarx, xmm, meanx, varx, x, gamma, beta = cache
+    N = dout.shape[0]
+    
+    dbeta = np.sum(dout, axis = 0)
+    dgamma = np.sum(dout * norm, axis = 0)
+    
+    dnorm = dout * gamma
+    dprod = dnorm * xmm
+    
+    dxmm = dnorm * prod
+    ddenom = (-1) * dprod * (prod ** 2)
+    
+    dsqrtvarx = ddenom 
+    dvarx =  (0.5) * dsqrtvarx * np.reciprocal(sqrtvarx)
+    
+    dxmm += (2 / N) * xmm * np.sum(dvarx, axis = 0)
+    
+    dmeanx = (-1) * dxmm
+    dx = dxmm
+    
+    dx += (1 / N) * np.sum(dmeanx, axis = 0)
+    
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################

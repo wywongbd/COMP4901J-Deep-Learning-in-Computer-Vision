@@ -193,6 +193,11 @@ class FullyConnectedNet(object):
         for i in range(self.num_layers):
             self.params['b' + str(i+1)] = np.zeros(dims[i + 1])
             self.params['W' + str(i+1)] = np.random.normal(0, weight_scale, dims[i] * dims[i + 1]).reshape((dims[i], dims[i + 1])) 
+        
+        if use_batchnorm:
+            for i in range(self.num_layers - 1):
+                self.params[i] = np.zeros(dims[i + 1]) + 1
+                self.params[i] = np.zeros(dims[i + 1])
             
         ############################################################################
         #                             END OF YOUR CODE                             #
