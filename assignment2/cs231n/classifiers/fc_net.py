@@ -189,25 +189,10 @@ class FullyConnectedNet(object):
         # parameters should be initialized to zero.                                #
         ############################################################################
         
-        self.params['W1'] = np.random.normal(0, weight_scale, input_dim * hidden_dims[0]).reshape((input_dim, hidden_dims[0]))
-        self.params['b1'] = np.zeros(hidden_dims[0])
-
-        # initialize weights for last layer
-        weight_key = 'W' + str(self.num_layers)
-        bias_key = 'b' + str(self.num_layers)
-
-        self.params[weight_key] = np.random.normal(0, weight_scale, hidden_dims[-1] * num_classes).reshape((hidden_dims[-1],  num_classes))
-        self.params[bias_key] = np.zeros(num_classes)
-            
-        for i in range(1, len(hidden_dims)):
-            hidden_input_dim = hidden_dims[i-1]
-            hidden_output_dim = hidden_dims[i]
-                
-            weight_key = 'W' + str(i + 1)
-            bias_key = 'b' + str(i + 1)
-            
-            self.params[weight_key] = np.random.normal(0, weight_scale, hidden_input_dim * hidden_output_dim).reshape((hidden_input_dim, hidden_output_dim))
-            self.params[bias_key] = np.zeros(hidden_output_dim)
+        dims = [input_dim] + hidden_dims + [num_classes]
+        for i in range(self.num_layers):
+            self.params['b' + str(i+1)] = np.zeros(dims[i + 1])
+            self.params['W' + str(i+1)] = np.random.normal(0, weight_scale, dims[i] * dims[i + 1]).reshape((dims[i], dims[i + 1])) 
             
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -306,7 +291,7 @@ class FullyConnectedNet(object):
         
         for i in range(self.num_layers):
             weight_key = 'W' + str(i+1)
-            loss += 0.5 * self.reg * np.sum(self.params[weight_key] ** 2)
+            loss +=  self.reg * 0.5 * np.sum(self.params[weight_key] * self.params[weight_key])
             grads[weight_key] = self.reg * self.params[weight_key]
             
         d_upstream, dw, db = affine_backward(d_upstream, cache[self.num_layers])
