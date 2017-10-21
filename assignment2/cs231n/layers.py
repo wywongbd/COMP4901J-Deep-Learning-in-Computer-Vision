@@ -636,8 +636,7 @@ def spatial_batchnorm_backward(dout, cache):
     for i in range(C):
         dout_raw = dout[:, i, :, :]
         dout_flattened = dout_raw.flatten('F')
-        dout_flattened = dout_flattened.reshape((len(dout_flattened), 1))
-        
+        dout_flattened = dout_flattened.reshape((len(dout_flattened), 1))        
         dx_flattened, dgamma[i], dbeta[i] = batchnorm_backward(dout_flattened, cache[i])
         
         dx[:, i, :, :] += dx_flattened.reshape(dout_raw.shape, order='F')
