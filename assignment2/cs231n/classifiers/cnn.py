@@ -55,8 +55,8 @@ class ThreeLayerConvNet(object):
         
         # IS THIS CORRECT ???
         pad = (filter_size - 1) // 2
-        conv_output_H = 1 + (H  + 2 * pad - filter_size) / 1
-        conv_output_W = 1 + (W  + 2 * pad - filter_size) / 1
+        conv_output_H = 1 + (H  + 2 * pad - filter_size) // 1
+        conv_output_W = 1 + (W  + 2 * pad - filter_size) // 1
         
         hidden_input_shape = (num_filters, conv_output_H / 2, conv_output_W / 2)
         prod = np.array(hidden_input_shape).prod()
