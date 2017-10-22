@@ -591,14 +591,11 @@ def spatial_batchnorm_forward(x, gamma, beta, bn_param):
     # be very short; ours is less than five lines.                            #
     ###########################################################################
     N, C, H, W = x.shape
-    out = np.zeros(x.shape)
-    cache = {}
+    x_transformed = x.transpose(0, 2, 3, 1).reshape(N*H*W, C)
+    out_transformed, cache = batchnorm_forward(x_transformed, gamma, beta, bn_param)
     
-    for i in range(C):
-        x_raw = x[:, i, :, :]
-        x_raw_flattened = x[:, i, :, :].flatten('F')
-        out_flattened, cache[i] = batchnorm_forward(x_raw_flattened.reshape((len(x_raw_flattened), 1)), gamma[i], beta[i], bn_param)
-        out[:, i, :, :] = out_flattened.reshape(x_raw.shape, order='F')        
+    out = out_transformed.reshape(N, H, W, C).transpose(0, 3, 1, 2)
+    
     
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -630,16 +627,11 @@ def spatial_batchnorm_backward(dout, cache):
     # be very short; ours is less than five lines.                            #
     ###########################################################################
     N, C, H, W = dout.shape
-    dx = np.zeros(dout.shape)
-    dgamma, dbeta = np.zeros(C), np.zeros(C)
     
-    for i in range(C):
-        dout_raw = dout[:, i, :, :]
-        dout_flattened = dout_raw.flatten('F')
-        dout_flattened = dout_flattened.reshape((len(dout_flattened), 1))        
-        dx_flattened, dgamma[i], dbeta[i] = batchnorm_backward(dout_flattened, cache[i])
-        
-        dx[:, i, :, :] += dx_flattened.reshape(dout_raw.shape, order='F')
+    dout_transformed = dout.transpose(0, 2, 3, 1).reshape(N*H*W, C)
+    dx_transformed, dgamma, dbeta = batchnorm_backward(dout_transformed, cache)
+    
+    dx = dx_transformed.reshape(N, H, W, C).transpose(0, 3, 1, 2)
     
     ###########################################################################
     #                             END OF YOUR CODE                            #
