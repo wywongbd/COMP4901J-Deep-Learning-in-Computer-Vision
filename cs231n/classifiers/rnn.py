@@ -137,7 +137,41 @@ class CaptioningRNN(object):
         # defined above to store loss and gradients; grads[k] should give the      #
         # gradients for self.params[k].                                            #
         ############################################################################
-        pass
+        
+        # Forward propagation 
+        h0, initial_affine_cache = affine_forward(features, W_proj, b_proj) 
+        captions_in_embed, embed_cache = word_embedding_forward(captions_in, W_embed)
+               
+        if self.cell_type == 'rnn':
+            h, rnn_cache = rnn_forward(captions_in_embed, h0, Wx, Wh, b)
+        elif self.cell_type == 'lstm':
+            h, rnn_cache = lstm_forward(captions_in_embed, h0, Wx, Wh, b)
+        
+        scores, temporal_affine_cache = temporal_affine_forward(h, W_vocab, b_vocab)
+        
+        loss, d_upstream = temporal_softmax_loss(scores, captions_out, mask, verbose=False)
+        
+        # Backward propagation
+        d_h, d_W_vocab, d_b_vocab = temporal_affine_backward(d_upstream, temporal_affine_cache)
+        
+        if self.cell_type == 'rnn':
+            d_x, d_h0, d_Wx, d_Wh, d_b = rnn_backward(d_h, rnn_cache)
+        elif self.cell_type == 'lstm':
+            d_x, d_h0, d_Wx, d_Wh, d_b = lstm_backward(d_h, rnn_cache)
+        
+        d_W_embed = word_embedding_backward(d_x, embed_cache)
+        
+        d_features, d_W_proj, d_b_proj = affine_backward(d_h0, initial_affine_cache)
+        
+        grads['W_proj'] = d_W_proj
+        grads['b_proj'] = d_b_proj
+        grads['W_embed'] = d_W_embed
+        grads['Wx'] = d_Wx
+        grads['Wh'] = d_Wh
+        grads['b'] = d_b
+        grads['W_vocab'] = d_W_vocab
+        grads['b_vocab'] = d_b_vocab
+        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -199,7 +233,43 @@ class CaptioningRNN(object):
         # functions; you'll need to call rnn_step_forward or lstm_step_forward in #
         # a loop.                                                                 #
         ###########################################################################
-        pass
+        h0 = np.dot(features, W_proj) + b_proj
+
+        captions[:, 0] = self._start
+        prev_h = h0  # Previous hidden state
+        prev_c = np.zeros_like(h0)  # Previous cell state
+        # Current word (start word)
+        capt = self._start * np.ones((N, 1), dtype=np.int32)
+
+        for t in range(max_length):  # Let's go over the sequence
+
+            word_embed, _ = word_embedding_forward(
+                capt, W_embed)  # Embedded current word
+            if self.cell_type == 'rnn':
+                # Run a step of rnn
+                h, _ = rnn_step_forward(np.squeeze(
+                    word_embed), prev_h, Wx, Wh, b)
+            elif self.cell_type == 'lstm':
+                # Run a step of lstm
+                h, c, _ = lstm_step_forward(np.squeeze(
+                    word_embed), prev_h, prev_c, Wx, Wh, b)
+            else:
+                raise ValueError('%s not implemented' % (self.cell_type))
+
+            # Compute the score distrib over the dictionary
+            scores, _ = temporal_affine_forward(
+                h[:, np.newaxis, :], W_vocab, b_vocab)
+            # Squeeze unecessari dimension and get the best word idx
+            idx_best = np.squeeze(np.argmax(scores, axis=2))
+            # Put it in the captions
+            captions[:, t] = idx_best
+
+            # Update the hidden state, the cell state (if lstm) and the current
+            # word
+            prev_h = h
+            if self.cell_type == 'lstm':
+                prev_c = c
+            capt = captions[:, t]
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
